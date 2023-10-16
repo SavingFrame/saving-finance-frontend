@@ -1,45 +1,31 @@
-import React, {useContext, useState} from 'react';
-import {View, TextInput, Button, StyleSheet, Alert, Text} from 'react-native';
-import {AxiosContext, AxiosContextProps} from '../../context/AxiosContext';
-import {AuthContext, AuthContextProps} from '../../context/AuthContext';
-import * as Keychain from 'react-native-keychain';
+import React, {useState} from 'react';
+import {Alert, Button, StyleSheet, Text, TextInput, View} from 'react-native';
 import {isAxiosError} from 'axios';
+import publicAxios from '../../services/api/publicAxios';
+import {setCredentials} from '../../store/auth/authSlice';
+import {useDispatch} from 'react-redux';
 
-interface LoginComponentProps {
-  onLogin: (username: string, password: string) => void;
-}
-
-const LoginComponent: React.FC<LoginComponentProps> = () => {
+const LoginComponent: React.FC = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-
-  const authContext = useContext(AuthContext) as AuthContextProps;
-  const {publicAxios} = useContext(AxiosContext) as AxiosContextProps;
+  const dispatch = useDispatch();
 
   const onLogin = async () => {
     try {
-      const response = await publicAxios.post('/login', {
+      const response = await publicAxios.post('/v1/token/', {
         email,
         password,
       });
 
-      const {accessToken, refreshToken} = response.data;
-      authContext.setAuthState({
-        accessToken,
-        refreshToken,
-        authenticated: true,
-      });
-
-      await Keychain.setGenericPassword(
-        'token',
-        JSON.stringify({
-          accessToken,
-          refreshToken,
-        }),
-      );
+      const {access, refresh} = response.data;
+      dispatch(setCredentials({accessToken: access, refreshToken: refresh}));
     } catch (error) {
       if (isAxiosError(error)) {
-        Alert.alert('Login Failed', error.response?.data.message);
+        console.log(error);
+        Alert.alert(
+          'Login Failed',
+          error.response?.data.detail || error.response?.data,
+        );
       } else {
         Alert.alert('Login Failed with unknown error');
       }

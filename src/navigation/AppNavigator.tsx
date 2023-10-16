@@ -1,4 +1,4 @@
-import React, {useCallback, useContext, useEffect, useState} from 'react';
+import React, {useCallback, useEffect, useState} from 'react';
 import {createStackNavigator} from '@react-navigation/stack';
 import {createBottomTabNavigator} from '@react-navigation/bottom-tabs';
 import {NavigationContainer} from '@react-navigation/native';
@@ -8,10 +8,25 @@ import * as Keychain from 'react-native-keychain';
 import LoginScreen from '../screens/Auth/LoginScreen';
 import RegisterScreen from '../screens/Auth/RegisterScreen';
 import DashboardScreen from '../screens/Dashboard/DashboardScreen';
-import {AuthContext, AuthContextProps} from '../context/AuthContext';
 import Spinner from '../components/Additional/Spinner';
+import SettingsScreen from '../screens/Settings/SettingsScreen';
+import CategoryScreen from '../screens/Settings/Category/CategoryScreen';
+import CategoryModalScreen from '../screens/Settings/Category/CategoryModalScreen';
+import {useDispatch, useSelector} from 'react-redux';
+import {setCredentials} from '../store/auth/authSlice';
+import {RootState} from '../store';
+import {Category} from '../services/Settings/Category/requests';
 
-const Stack = createStackNavigator();
+export type RootStackParamList = {
+  Login: undefined;
+  Register: undefined;
+  Dashboard: undefined;
+  Settings: undefined;
+  Categories: undefined;
+  CategoryModal: {category?: Category; parent?: Category};
+};
+
+const Stack = createStackNavigator<RootStackParamList>();
 const Tab = createBottomTabNavigator();
 
 const AuthStack = () => (
@@ -21,52 +36,115 @@ const AuthStack = () => (
   </Stack.Navigator>
 );
 
+const SettingsStack = () => (
+  <Stack.Navigator>
+    <Stack.Group>
+      <Stack.Screen name="Settings" component={SettingsScreen} />
+      <Stack.Screen
+        name={'Categories'}
+        component={CategoryScreen}
+        options={navigation => ({
+          headerRight: () => (
+            <Ionicons
+              name="add-outline"
+              size={30}
+              color={'#000'}
+              style={{marginRight: 10}}
+              onPress={() => {
+                navigation.navigation.navigate('CategoryModal');
+              }}
+            />
+          ),
+        })}
+      />
+    </Stack.Group>
+    <Stack.Group screenOptions={{presentation: 'modal'}}>
+      <Stack.Screen
+        name={'CategoryModal'}
+        component={CategoryModalScreen}
+        options={{
+          headerBackTitleVisible: false,
+          headerRight: () => (
+            <Ionicons
+              name="checkmark-outline"
+              size={30}
+              color={'#000'}
+              style={{marginRight: 10}}
+            />
+          ),
+          headerBackImage: () => (
+            <Ionicons
+              name="close-outline"
+              size={30}
+              color={'#000'}
+              style={{marginLeft: 10}}
+            />
+          ),
+        }}
+      />
+    </Stack.Group>
+  </Stack.Navigator>
+);
+
 const MainTabs = () => (
-  <Tab.Navigator
-    screenOptions={({route}) => ({
-      tabBarIcon: ({color, size}) => {
-        let iconName = 'Dashboard'; // Default icon name
-        if (route.name === 'Dashboard') {
-          iconName = 'ios-home'; // Use the correct icon name for Ionicons
-        } else {
-          // Add more tab icons as needed
-        }
-        return <Ionicons name={iconName} size={size} color={color} />;
-      },
-    })}>
-    <Tab.Screen name="Dashboard" component={DashboardScreen} />
-    {/* Add more tab screens as needed */}
+  <Tab.Navigator initialRouteName={'Dashboard'}>
+    <Tab.Screen
+      name="Dashboard"
+      component={DashboardScreen}
+      options={{
+        tabBarLabel: 'Dashboard',
+        tabBarIcon: ({color, size}) => (
+          <Ionicons name="home" size={size} color={color} />
+        ),
+      }}
+    />
+    <Tab.Screen
+      name={'Settings'}
+      component={SettingsStack}
+      options={{
+        tabBarLabel: 'Settings',
+        headerShown: false,
+        tabBarIcon: ({color, size}) => (
+          <Ionicons name="cog-outline" size={size} color={color} />
+        ),
+      }}
+    />
   </Tab.Navigator>
 );
 
 const AppNavigator: React.FC = () => {
-  const authContext = useContext(AuthContext) as AuthContextProps;
+  const dispatch = useDispatch();
+  const bearerToken = useSelector((state: RootState) => state.auth.accessToken);
   const [status, setStatus] = useState('loading');
+
   const loadJWT = useCallback(async () => {
     try {
-      const value = await Keychain.getGenericPassword();
-      if (value === false) {
-        throw new Error('No value stored in Keychain');
+      if (bearerToken) {
+        setStatus('success');
+        return;
       }
-      const jwt = JSON.parse(value.password);
 
-      authContext.setAuthState({
-        accessToken: jwt.accessToken || null,
-        refreshToken: jwt.refreshToken || null,
-        authenticated: jwt.accessToken !== null,
-      });
-      setStatus('success');
+      const value = await Keychain.getGenericPassword();
+      if (value) {
+        const jwt = JSON.parse(value.password);
+        // Save the token from the Keychain to the Redux store
+        dispatch(
+          setCredentials({
+            accessToken: jwt.accessToken,
+            refreshToken: jwt.refreshToken,
+          }),
+        );
+
+        setStatus('success');
+      } else {
+        setStatus('unauthenticated');
+      }
     } catch (error) {
-      setStatus('error');
       // @ts-ignore
       console.log(`Keychain Error: ${error.message}`);
-      authContext.setAuthState({
-        accessToken: null,
-        refreshToken: null,
-        authenticated: false,
-      });
+      setStatus('unauthenticated');
     }
-  }, []);
+  }, [bearerToken, dispatch]);
 
   useEffect(() => {
     loadJWT();
@@ -76,7 +154,7 @@ const AppNavigator: React.FC = () => {
     return <Spinner />;
   }
 
-  if (authContext?.authState?.authenticated === false) {
+  if (status === 'unauthenticated' || !bearerToken) {
     return (
       <NavigationContainer>
         <AuthStack />
