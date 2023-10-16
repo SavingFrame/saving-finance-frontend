@@ -150,12 +150,12 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   categoryName: {
-    fontSize: 16,
+    fontSize: 17,
     color: '#000',
     marginLeft: 8,
   },
   subcategoryName: {
-    fontSize: 14,
+    fontSize: 16,
     color: '#555',
     marginLeft: 8,
   },
@@ -200,7 +200,7 @@ const styles = StyleSheet.create({
   card: {
     marginHorizontal: 20,
     marginBottom: 8,
-    padding: 10,
+    padding: 12,
     borderRadius: 10,
     backgroundColor: '#FFF',
     shadowColor: '#000',
