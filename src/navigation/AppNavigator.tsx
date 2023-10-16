@@ -22,6 +22,7 @@ export type RootStackParamList = {
   Register: undefined;
   Dashboard: undefined;
   Settings: undefined;
+  SettingsDetail: undefined;
   Categories: undefined;
   CategoryModal: {category?: Category; parent?: Category};
 };
@@ -39,11 +40,18 @@ const AuthStack = () => (
 const SettingsStack = () => (
   <Stack.Navigator>
     <Stack.Group>
-      <Stack.Screen name="Settings" component={SettingsScreen} />
+      <Stack.Screen
+        name="SettingsDetail"
+        component={SettingsScreen}
+        options={{
+          headerTitle: 'Settings',
+        }}
+      />
       <Stack.Screen
         name={'Categories'}
         component={CategoryScreen}
         options={navigation => ({
+          headerTitle: 'Categories',
           headerRight: () => (
             <Ionicons
               name="add-outline"
@@ -62,6 +70,7 @@ const SettingsStack = () => (
       <Stack.Screen
         name={'CategoryModal'}
         component={CategoryModalScreen}
+        initialParams={{category: undefined, parent: undefined}}
         options={{
           headerBackTitleVisible: false,
           headerRight: () => (

@@ -10,16 +10,18 @@ import {
 import HueColorPicker from '../../../components/Additional/ColorPicker';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import IconChooserModal from '../../../components/Settings/Category/IconChooserModal';
-import {Category} from '../../../services/Settings/Category/requests';
+import {
+  Category,
+  useCreateCategoryMutation,
+} from '../../../services/Settings/Category/requests';
 import ParentCategoryPicker from '../../../components/Settings/Category/ParentCategoryPicker';
 import type {StackScreenProps} from '@react-navigation/stack';
 import {RootStackParamList} from '../../../navigation/AppNavigator';
 
 type Props = StackScreenProps<RootStackParamList, 'CategoryModal'>;
 
-const CategoryModalScreen = ({route}: Props) => {
+const CategoryModalScreen = ({route, navigation}: Props) => {
   const {category, parent} = route.params;
-  console.log('category', category, 'parent', parent);
   const [title, setTitle] = useState(category?.name || '');
   const [selectedIcon, setSelectedIcon] = useState(
     category?.icon || 'fast-food-outline',
@@ -28,7 +30,7 @@ const CategoryModalScreen = ({route}: Props) => {
   const [color, setColor] = useState(category?.color || '#808080');
   const [showPicker, setShowPicker] = useState(false);
   const [selectedParentCategory, setSelectedParentCategory] =
-    useState<Category | null>(parent);
+    useState<Category | null>(parent || null);
   const [showParentCategoryPicker, setShowParentCategoryPicker] =
     useState(false);
 
@@ -36,6 +38,42 @@ const CategoryModalScreen = ({route}: Props) => {
     setSelectedParentCategory(ct);
     setShowParentCategoryPicker(false);
   };
+
+  const [createCategory] = useCreateCategoryMutation();
+
+  React.useEffect(() => {
+    const handleSubmit = async () => {
+      const data = {
+        name: title,
+        icon: selectedIcon,
+        color,
+        parent: selectedParentCategory?.id || null,
+      };
+      console.log('data', data, 'title', title, 'selectedIcon', selectedIcon);
+      await createCategory(data);
+      navigation.goBack();
+    };
+    // Use `setOptions` to update the button that we previously specified
+    // Now the button includes an `onPress` handler to update the count
+    navigation.setOptions({
+      headerRight: () => (
+        <Ionicons
+          name="checkmark-outline"
+          size={30}
+          color={'#000'}
+          style={{marginRight: 10}}
+          onPress={handleSubmit}
+        />
+      ),
+    });
+  }, [
+    color,
+    createCategory,
+    navigation,
+    selectedIcon,
+    selectedParentCategory?.id,
+    title,
+  ]);
 
   return (
     <View style={modalStyles.container}>
@@ -63,7 +101,10 @@ const CategoryModalScreen = ({route}: Props) => {
           value={title}
           placeholder="Title"
           placeholderTextColor="#aaa"
-          onChangeText={setTitle}
+          onChangeText={value => {
+            console.log('Text changed value: ', value);
+            setTitle(value);
+          }}
           style={modalStyles.input}
         />
 
@@ -99,8 +140,6 @@ const CategoryModalScreen = ({route}: Props) => {
           <Ionicons name={selectedIcon} size={24} color={color} />
         </TouchableOpacity>
       </ScrollView>
-
-      {/* Other modals... */}
     </View>
   );
 };

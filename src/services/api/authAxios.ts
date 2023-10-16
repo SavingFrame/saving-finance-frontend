@@ -57,7 +57,7 @@ class AuthAxios {
       credentials && credentials.username === 'token'
         ? JSON.parse(credentials.password)
         : null;
-    console.log('tokens', tokens);
+    console.log('tokens', tokens, 'credentials', credentials);
     const options: AxiosRequestConfig = {
       method: 'POST',
       data: {refresh: tokens?.refreshToken},
