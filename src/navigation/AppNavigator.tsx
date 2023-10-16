@@ -15,7 +15,7 @@ import CategoryModalScreen from '../screens/Settings/Category/CategoryModalScree
 import {useDispatch, useSelector} from 'react-redux';
 import {setCredentials} from '../store/auth/authSlice';
 import {RootState} from '../store';
-import {Category} from '../services/Settings/Category/requests';
+import {Category, Subcategory} from '../services/Settings/Category/requests';
 
 export type RootStackParamList = {
   Login: undefined;
@@ -24,7 +24,7 @@ export type RootStackParamList = {
   Settings: undefined;
   SettingsDetail: undefined;
   Categories: undefined;
-  CategoryModal: {category?: Category; parent?: Category};
+  CategoryModal: {category?: Category | Subcategory; parent?: Category};
 };
 
 const Stack = createStackNavigator<RootStackParamList>();

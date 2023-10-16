@@ -59,15 +59,14 @@ const CategoryScreen = ({navigation}: Props) => {
       <FlatList
         data={data}
         renderItem={({item}) => (
-          <View style={styles.card}>
+          <TouchableOpacity
+            style={styles.card}
+            onPress={() =>
+              navigation.navigate('CategoryModal', {category: item})
+            }>
             <View style={styles.categoryHeader}>
               <Ionicons name={item.icon} size={20} color={item.color} />
-              <TouchableOpacity
-                onPress={() =>
-                  navigation.navigate('CategoryModal', {category: item})
-                }>
-                <Text style={styles.categoryName}>{item.name}</Text>
-              </TouchableOpacity>
+              <Text style={styles.categoryName}>{item.name}</Text>
               {item.subcategories && item.subcategories.length > 0 && (
                 <Ionicons
                   name={
@@ -76,7 +75,7 @@ const CategoryScreen = ({navigation}: Props) => {
                       : 'chevron-down'
                   }
                   size={20}
-                  color="#fff"
+                  color="#000"
                   onPress={() => toggleExpand(item.id)}
                   style={{marginLeft: 10}}
                 />
@@ -86,14 +85,26 @@ const CategoryScreen = ({navigation}: Props) => {
                   navigation.navigate('CategoryModal', {parent: item})
                 }
                 style={styles.addSubCategoryButton}>
-                <Ionicons name="add-outline" size={20} color="#fff" />
+                <Ionicons name="add-outline" size={20} color="#000" />
               </TouchableOpacity>
             </View>
             {expandedCategories.has(item.id) && (
               <FlatList
                 data={item.subcategories}
-                renderItem={({item: subcategory}) => (
-                  <View style={styles.subcategoryContainer}>
+                renderItem={({item: subcategory, index}) => (
+                  <TouchableOpacity
+                    style={[
+                      styles.subcategoryContainer,
+                      index === 0 && styles.firstSubcategory,
+                      index === item.subcategories.length - 1 &&
+                        styles.lastSubcategory,
+                    ]}
+                    onPress={() =>
+                      navigation.navigate('CategoryModal', {
+                        category: subcategory,
+                        parent: item,
+                      })
+                    }>
                     <Ionicons
                       name={subcategory.icon}
                       size={20}
@@ -102,12 +113,13 @@ const CategoryScreen = ({navigation}: Props) => {
                     <Text style={styles.subcategoryName}>
                       {subcategory.name}
                     </Text>
-                  </View>
+                  </TouchableOpacity>
                 )}
                 keyExtractor={subcategory => String(subcategory.id)}
+                ItemSeparatorComponent={() => <View style={styles.separator} />}
               />
             )}
-          </View>
+          </TouchableOpacity>
         )}
         keyExtractor={category => String(category.id)}
       />
@@ -118,88 +130,107 @@ const CategoryScreen = ({navigation}: Props) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#000',
-    paddingTop: 20,
+    backgroundColor: '#F9F9F9',
+    paddingTop: 10,
   },
   headerContainer: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     paddingHorizontal: 20,
-    marginBottom: 20,
+    marginBottom: 10,
   },
   header: {
-    fontSize: 30,
-    color: '#fff',
+    fontSize: 28,
+    color: '#000',
     fontWeight: 'bold',
-  },
-  card: {
-    backgroundColor: '#1C1C1E',
-    marginHorizontal: 20,
-    marginBottom: 10,
-    padding: 15,
-    borderRadius: 10,
   },
   categoryHeader: {
     flexDirection: 'row',
     alignItems: 'center',
   },
   categoryName: {
-    fontSize: 18,
-    color: '#fff',
-    marginLeft: 10,
-  },
-  subcategoryContainer: {
-    marginLeft: 30,
-    marginTop: 5, // <- Decreased to bring the border down
-    marginBottom: 10,
-    flexDirection: 'row',
-    alignItems: 'center',
-    borderBottomWidth: 0.5,
-    borderBottomColor: '#8E8E93',
-    paddingBottom: 10, // <- Increased to push the border more centered
+    fontSize: 16,
+    color: '#000',
+    marginLeft: 8,
   },
   subcategoryName: {
-    fontSize: 16,
-    color: '#8E8E93',
-    marginLeft: 10,
+    fontSize: 14,
+    color: '#555',
+    marginLeft: 8,
   },
   addSubCategoryButton: {
-    marginLeft: 'auto', // push the button to the far right of the container
-    paddingLeft: 15, // some spacing from the category name
+    marginLeft: 'auto',
+    paddingLeft: 10,
   },
   loadingContainer: {
     flex: 1,
-    backgroundColor: '#000',
+    backgroundColor: '#F9F9F9',
     justifyContent: 'center',
     alignItems: 'center',
   },
   loadingText: {
     marginTop: 10,
-    color: '#fff',
+    color: '#000',
     fontSize: 16,
   },
   errorContainer: {
     flex: 1,
-    backgroundColor: '#000',
+    backgroundColor: '#F9F9F9',
     justifyContent: 'center',
     alignItems: 'center',
     paddingHorizontal: 20,
   },
   errorText: {
-    color: '#fff',
-    fontSize: 18,
+    color: '#000',
+    fontSize: 16,
     textAlign: 'center',
     marginBottom: 20,
   },
   retryButton: {
-    color: '#007AFF', // change this to your preferred button color
-    fontSize: 18,
-    padding: 10,
+    color: '#007AFF',
+    fontSize: 16,
+    padding: 8,
     borderWidth: 1,
-    borderColor: '#007AFF', // change this to your preferred button border color
+    borderColor: '#007AFF',
     borderRadius: 8,
     textAlign: 'center',
+  },
+
+  card: {
+    marginHorizontal: 20,
+    marginBottom: 8,
+    padding: 10,
+    borderRadius: 10,
+    backgroundColor: '#FFF',
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 1,
+    },
+    shadowOpacity: 0.2,
+    shadowRadius: 1.41,
+    elevation: 2,
+  },
+  subcategoryContainer: {
+    marginLeft: 20,
+    marginTop: 3,
+    marginBottom: 3,
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingBottom: 8,
+  },
+  firstSubcategory: {
+    paddingTop: 8,
+  },
+  lastSubcategory: {
+    paddingBottom: 6,
+    marginBottom: 5,
+  },
+  separator: {
+    height: 0.5,
+    backgroundColor: '#E0E0E0',
+    marginLeft: 20,
   },
 });
 
