@@ -15,7 +15,7 @@ import {
   useCreateCategoryMutation,
   useDeleteCategoryMutation,
   useUpdateCategoryMutation,
-} from '../../../services/Settings/Category/requests';
+} from '../../../services/Settings/categories';
 import ParentCategoryPicker from '../../../components/Settings/Category/ParentCategoryPicker';
 import type {StackScreenProps} from '@react-navigation/stack';
 import {RootStackParamList} from '../../../navigation/AppNavigator';

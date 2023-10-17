@@ -12,7 +12,7 @@ import Ionicons from 'react-native-vector-icons/Ionicons';
 import {
   Category,
   useGetCategoriesQuery,
-} from '../../../services/Settings/Category/requests';
+} from '../../../services/Settings/categories';
 
 type ParentCategoryPickerProps = {
   isVisible: boolean;

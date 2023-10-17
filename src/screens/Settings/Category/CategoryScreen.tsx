@@ -8,7 +8,7 @@ import {
   View,
 } from 'react-native';
 import Ionicons from 'react-native-vector-icons/Ionicons';
-import {useGetCategoriesQuery} from '../../../services/Settings/Category/requests';
+import {useGetCategoriesQuery} from '../../../services/Settings/categories';
 import {RootStackParamList} from '../../../navigation/AppNavigator';
 import {StackScreenProps} from '@react-navigation/stack/lib/typescript/src/types';
 

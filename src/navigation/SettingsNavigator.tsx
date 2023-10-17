@@ -5,7 +5,7 @@ import CategoryModalScreen from '../screens/Settings/Category/CategoryModalScree
 
 import {Stack} from './AppNavigator';
 import Ionicons from 'react-native-vector-icons/Ionicons';
-import {Category, Subcategory} from '../services/Settings/Category/requests'; // Import Ionicons from the library
+import {Category, Subcategory} from '../services/Settings/categories'; // Import Ionicons from the library
 
 export type SettingsStackParamList = {
   SettingsDetail: undefined;
