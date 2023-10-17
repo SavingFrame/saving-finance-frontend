@@ -1,4 +1,4 @@
-import React, {useState} from 'react';
+import React, {useEffect, useState} from 'react';
 import {
   SafeAreaView,
   SectionList,
@@ -7,75 +7,104 @@ import {
   TouchableOpacity,
 } from 'react-native';
 import Ionicons from 'react-native-vector-icons/Ionicons';
+import ContextMenu from 'react-native-context-menu-view';
+import {
+  useGetWalletGroupsQuery,
+  useGetWalletsQuery,
+  Wallet,
+} from '../../services/Dashboard/wallets';
+import {RootStackParamList} from '../../navigation/AppNavigator';
+import {StackScreenProps} from '@react-navigation/stack/lib/typescript/src/types';
 
-type Wallet = {
-  name: string;
-  balance: number;
-};
-
-type WalletGroup = {
+type WalletGroupSection = {
   title: string;
   data: Wallet[];
+  id: number;
 };
 
-const SAMPLE_WALLETS: WalletGroup[] = [
-  {
-    title: 'Bank Wallets',
-    data: [
-      {name: 'Chase Wallet', balance: 5000},
-      {name: 'Wells Fargo Wallet', balance: 2500},
-    ],
-  },
-  {
-    title: 'Crypto Wallets',
-    data: [
-      {name: 'Bitcoin Wallet', balance: 2},
-      {name: 'Ethereum Wallet', balance: 5},
-    ],
-  },
-];
-const WalletScreen: React.FC = () => {
+type Props = StackScreenProps<RootStackParamList, 'Wallet'>;
+
+const WalletScreen = ({navigation}: Props) => {
   const [expandedGroups, setExpandedGroups] = useState<string[]>(
-    SAMPLE_WALLETS.map(group => group.title),
+    [] as string[],
   );
 
-  const toggleGroupExpansion = (groupTitle: string) => {
-    if (expandedGroups.includes(groupTitle)) {
-      setExpandedGroups(prev => prev.filter(title => title !== groupTitle));
+  const {data: walletsData} = useGetWalletsQuery();
+  const {data: walletGroupsData} = useGetWalletGroupsQuery();
+
+  // Organize the wallets by group
+  const groupedWallets: WalletGroupSection[] =
+    walletGroupsData?.map(group => ({
+      title: group.name,
+      id: group.id,
+      data: walletsData?.filter(wallet => wallet.group === group.id) || [],
+    })) || [];
+
+  useEffect(() => {
+    if (walletGroupsData) {
+      setExpandedGroups(walletGroupsData.map(group => String(group.id)));
+    }
+  }, [walletGroupsData]);
+
+  const toggleGroupExpansion = (groupId: string) => {
+    if (expandedGroups.includes(groupId)) {
+      setExpandedGroups(prev => prev.filter(id => id !== groupId));
     } else {
-      setExpandedGroups(prev => [...prev, groupTitle]);
+      setExpandedGroups(prev => [...prev, groupId]);
     }
   };
 
   return (
     <SafeAreaView style={styles.container}>
       <SectionList
-        sections={SAMPLE_WALLETS}
+        sections={groupedWallets}
         keyExtractor={(item, index) => item.name + index}
-        renderSectionHeader={({section: {title}}) => (
+        renderSectionHeader={({section: {title, id}}) => (
           <TouchableOpacity
             style={styles.groupHeader}
-            onPress={() => toggleGroupExpansion(title)}>
+            onPress={() => toggleGroupExpansion(String(id))}>
             <Text style={{fontSize: 16, fontWeight: 'bold'}}>{title}</Text>
             <Ionicons
               name={
-                expandedGroups.includes(title) ? 'chevron-up' : 'chevron-down'
+                expandedGroups.includes(String(id))
+                  ? 'chevron-up'
+                  : 'chevron-down'
               }
               size={20}
             />
           </TouchableOpacity>
         )}
-        renderItem={({item, section: {title}}) =>
-          expandedGroups.includes(title) ? (
-            <TouchableOpacity style={styles.walletItem}>
-              <Ionicons
-                name="wallet-outline"
-                size={24}
-                style={{marginRight: 10}}
-              />
-              <Text style={{flex: 1, fontSize: 18}}>{item.name}</Text>
-              <Text style={{fontSize: 18}}>${item.balance}</Text>
-            </TouchableOpacity>
+        renderItem={({item, section}) =>
+          expandedGroups.includes(String(section.id)) ? (
+            <ContextMenu
+              onPress={e => {
+                if (e.nativeEvent.name === 'Edit') {
+                  navigation.navigate('WalletModalScreen', {wallet: item});
+                } else {
+                  console.warn(
+                    `Pressed ${e.nativeEvent.name} at index ${e.nativeEvent.index}`,
+                  );
+                }
+              }}
+              actions={[
+                {
+                  title: 'Edit',
+                  systemIcon: 'pencil',
+                },
+              ]}>
+              <TouchableOpacity style={styles.walletItem}>
+                <Ionicons
+                  name={item.icon}
+                  size={24}
+                  style={{marginRight: 10}}
+                  color={item.color}
+                />
+                <Text style={{flex: 1, fontSize: 18}}>{item.name}</Text>
+                <Text style={{fontSize: 18}}>
+                  {item.currency_symbol} {item.balance}
+                </Text>
+              </TouchableOpacity>
+            </ContextMenu>
           ) : null
         }
         ListHeaderComponent={() => (
