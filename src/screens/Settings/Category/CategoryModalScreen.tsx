@@ -13,6 +13,8 @@ import IconChooserModal from '../../../components/Settings/Category/IconChooserM
 import {
   Category,
   useCreateCategoryMutation,
+  useDeleteCategoryMutation,
+  useUpdateCategoryMutation,
 } from '../../../services/Settings/Category/requests';
 import ParentCategoryPicker from '../../../components/Settings/Category/ParentCategoryPicker';
 import type {StackScreenProps} from '@react-navigation/stack';
@@ -34,12 +36,29 @@ const CategoryModalScreen = ({route, navigation}: Props) => {
   const [showParentCategoryPicker, setShowParentCategoryPicker] =
     useState(false);
 
+  React.useEffect(() => {
+    if (category) {
+      navigation.setOptions({
+        headerTitle: 'Edit Category',
+      });
+    }
+  }, [category, navigation]);
+
   const handleSelectParentCategory = (ct: Category) => {
     setSelectedParentCategory(ct);
     setShowParentCategoryPicker(false);
   };
 
+  const handleDelete = async () => {
+    if (category) {
+      await deleteCategory(category.id);
+      navigation.goBack();
+    }
+  };
+
   const [createCategory] = useCreateCategoryMutation();
+  const [updateCategory] = useUpdateCategoryMutation();
+  const [deleteCategory] = useDeleteCategoryMutation();
 
   React.useEffect(() => {
     const handleSubmit = async () => {
@@ -49,8 +68,11 @@ const CategoryModalScreen = ({route, navigation}: Props) => {
         color,
         parent: selectedParentCategory?.id || null,
       };
-      console.log('data', data, 'title', title, 'selectedIcon', selectedIcon);
-      await createCategory(data);
+      if (category) {
+        await updateCategory({id: category.id, ...data});
+      } else {
+        await createCategory(data);
+      }
       navigation.goBack();
     };
     // Use `setOptions` to update the button that we previously specified
@@ -139,6 +161,22 @@ const CategoryModalScreen = ({route, navigation}: Props) => {
           <Text style={modalStyles.label}>Icon</Text>
           <Ionicons name={selectedIcon} size={24} color={color} />
         </TouchableOpacity>
+        {category && (
+          <TouchableOpacity
+            onPress={handleDelete}
+            style={[
+              modalStyles.row,
+              {
+                justifyContent: 'center',
+                backgroundColor: '#FF4D4D',
+                marginTop: 15,
+              },
+            ]}>
+            <Text style={[modalStyles.label, {color: '#FFF'}]}>
+              Delete Category
+            </Text>
+          </TouchableOpacity>
+        )}
       </ScrollView>
     </View>
   );

@@ -65,28 +65,37 @@ const CategoryScreen = ({navigation}: Props) => {
               navigation.navigate('CategoryModal', {category: item})
             }>
             <View style={styles.categoryHeader}>
-              <Ionicons name={item.icon} size={20} color={item.color} />
-              <Text style={styles.categoryName}>{item.name}</Text>
-              {item.subcategories && item.subcategories.length > 0 && (
-                <Ionicons
-                  name={
-                    expandedCategories.has(item.id)
-                      ? 'chevron-up'
-                      : 'chevron-down'
+              <View style={{flexDirection: 'row', alignItems: 'center'}}>
+                <Ionicons name={item.icon} size={20} color={item.color} />
+                <TouchableOpacity
+                  onPress={() =>
+                    navigation.navigate('CategoryModal', {category: item})
+                  }>
+                  <Text style={styles.categoryName}>{item.name}</Text>
+                </TouchableOpacity>
+              </View>
+              <View style={{flexDirection: 'row', alignItems: 'center'}}>
+                {item.subcategories && item.subcategories.length > 0 && (
+                  <Ionicons
+                    name={
+                      expandedCategories.has(item.id)
+                        ? 'chevron-up'
+                        : 'chevron-down'
+                    }
+                    size={20}
+                    color="#000"
+                    onPress={() => toggleExpand(item.id)}
+                    style={{marginLeft: 10}}
+                  />
+                )}
+                <TouchableOpacity
+                  onPress={() =>
+                    navigation.navigate('CategoryModal', {parent: item})
                   }
-                  size={20}
-                  color="#000"
-                  onPress={() => toggleExpand(item.id)}
-                  style={{marginLeft: 10}}
-                />
-              )}
-              <TouchableOpacity
-                onPress={() =>
-                  navigation.navigate('CategoryModal', {parent: item})
-                }
-                style={styles.addSubCategoryButton}>
-                <Ionicons name="add-outline" size={20} color="#000" />
-              </TouchableOpacity>
+                  style={styles.addSubCategoryButton}>
+                  <Ionicons name="add-outline" size={20} color="#000" />
+                </TouchableOpacity>
+              </View>
             </View>
             {expandedCategories.has(item.id) && (
               <FlatList
@@ -145,9 +154,14 @@ const styles = StyleSheet.create({
     color: '#000',
     fontWeight: 'bold',
   },
+  // categoryHeader: {
+  //   flexDirection: 'row',
+  //   alignItems: 'center',
+  // },
   categoryHeader: {
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'space-between',
   },
   categoryName: {
     fontSize: 17,

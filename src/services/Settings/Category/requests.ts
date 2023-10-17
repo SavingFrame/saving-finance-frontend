@@ -45,7 +45,30 @@ export const categoryApi = apiWithTag.injectEndpoints({
       }),
       invalidatesTags: [{type: 'Categories', id: 'LIST'}],
     }),
+    updateCategory: builder.mutation<
+      Category,
+      Partial<Category> & Pick<Category, 'id'>
+    >({
+      query: ({id, ...body}) => ({
+        url: `/v1/transactions/categories/${id}/`,
+        method: 'PATCH',
+        data: body,
+      }),
+      invalidatesTags: (result, error, {id}) => [{type: 'Categories', id}],
+    }),
+    deleteCategory: builder.mutation<void, number>({
+      query: id => ({
+        url: `/v1/transactions/categories/${id}/`,
+        method: 'DELETE',
+      }),
+      invalidatesTags: (result, error, id) => [{type: 'Categories', id}],
+    }),
   }),
 });
 
-export const {useGetCategoriesQuery, useCreateCategoryMutation} = categoryApi;
+export const {
+  useGetCategoriesQuery,
+  useCreateCategoryMutation,
+  useUpdateCategoryMutation,
+  useDeleteCategoryMutation,
+} = categoryApi;

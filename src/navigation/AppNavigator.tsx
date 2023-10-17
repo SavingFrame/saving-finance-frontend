@@ -16,14 +16,18 @@ import {useDispatch, useSelector} from 'react-redux';
 import {setCredentials} from '../store/auth/authSlice';
 import {RootState} from '../store';
 import {Category, Subcategory} from '../services/Settings/Category/requests';
+import {Button, Text, TouchableOpacity, View} from 'react-native';
+import WalletScreen from '../screens/Dashboard/WalletScreen';
 
 export type RootStackParamList = {
   Login: undefined;
   Register: undefined;
   Dashboard: undefined;
+  DashboardPage: undefined;
   Settings: undefined;
   SettingsDetail: undefined;
   Categories: undefined;
+  Wallet: undefined;
   CategoryModal: {category?: Category | Subcategory; parent?: Category};
 };
 
@@ -50,7 +54,7 @@ const SettingsStack = () => (
       <Stack.Screen
         name={'Categories'}
         component={CategoryScreen}
-        options={navigation => ({
+        options={({navigation}) => ({
           headerTitle: 'Categories',
           headerRight: () => (
             <Ionicons
@@ -59,7 +63,7 @@ const SettingsStack = () => (
               color={'#000'}
               style={{marginRight: 10}}
               onPress={() => {
-                navigation.navigation.navigate('CategoryModal');
+                navigation.navigate('CategoryModal');
               }}
             />
           ),
@@ -72,6 +76,7 @@ const SettingsStack = () => (
         component={CategoryModalScreen}
         initialParams={{category: undefined, parent: undefined}}
         options={{
+          headerTitle: 'Add Category',
           headerBackTitleVisible: false,
           headerRight: () => (
             <Ionicons
@@ -95,15 +100,68 @@ const SettingsStack = () => (
   </Stack.Navigator>
 );
 
+const DashboardStack = () => (
+  <Stack.Navigator>
+    <Stack.Screen
+      name="DashboardPage"
+      component={DashboardScreen}
+      options={({navigation}) => ({
+        headerTitle: '',
+        headerLeft: () => (
+          <TouchableOpacity
+            style={{flexDirection: 'row', alignItems: 'center', marginLeft: 10}}
+            onPress={() => navigation.navigate('Wallet')} // Add this line for navigation
+          >
+            <Ionicons
+              name={'home-outline'}
+              size={30}
+              color="#000"
+              style={{marginRight: 10}}
+            />
+            <Text>All Accounts</Text>
+          </TouchableOpacity>
+        ),
+        headerRight: () => (
+          <View
+            style={{
+              flexDirection: 'row',
+              alignItems: 'center',
+              marginRight: 10,
+            }}>
+            <Text style={{marginRight: 20}}>PRO</Text>
+            <Button title="🔍" onPress={() => {}} />
+            <Button title="⋮" onPress={() => {}} />
+          </View>
+        ),
+      })}
+    />
+    <Stack.Screen
+      name="Wallet"
+      component={WalletScreen}
+      options={{
+        headerBackImage: () => (
+          <Ionicons
+            name="close-outline"
+            size={30}
+            color={'#000'}
+            style={{marginLeft: 10}}
+          />
+        ),
+        headerBackTitleVisible: false,
+      }}
+    />
+  </Stack.Navigator>
+);
+
 const MainTabs = () => (
   <Tab.Navigator initialRouteName={'Dashboard'}>
     <Tab.Screen
       name="Dashboard"
-      component={DashboardScreen}
+      component={DashboardStack}
       options={{
-        tabBarLabel: 'Dashboard',
+        headerShown: false,
         tabBarIcon: ({color, size}) => (
-          <Ionicons name="home" size={size} color={color} />
+          <Ionicons name="home-outline" size={size} color={color} />
         ),
       }}
     />
