@@ -11,37 +11,62 @@ import {Picker} from '@react-native-picker/picker';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import HueColorPicker from '../../components/Additional/ColorPicker';
 import IconChooserModal from '../../components/Settings/Category/IconChooserModal';
-import {useGetWalletGroupsQuery} from '../../services/Dashboard/wallets';
+import {
+  useCreateWalletMutation,
+  useGetWalletGroupsQuery,
+  useUpdateWalletMutation,
+  WalletBase,
+} from '../../services/Dashboard/wallets';
 import {RootStackParamList} from '../../navigation/AppNavigator';
 import {StackScreenProps} from '@react-navigation/stack/lib/typescript/src/types';
 
 type Props = StackScreenProps<RootStackParamList, 'WalletModalScreen'>;
 
-const WalletModalScreen = ({route}: Props) => {
+const WalletModalScreen = ({route, navigation}: Props) => {
   const {wallet} = route.params;
 
-  const [name, setName] = useState(wallet?.name || '');
-  const [selectedIcon, setSelectedIcon] = useState(
-    wallet?.icon || 'wallet-outline',
-  );
-  const [color, setColor] = useState(wallet?.color || '#808080');
-  const [initialBalance, setInitialBalance] = useState(wallet?.balance || '');
-  const [currency, setCurrency] = useState(wallet?.balance_currency || '');
-  const [selectedGroup, setSelectedGroup] = useState(wallet?.group || null);
+  const [walletData, setWalletData] = useState<WalletBase>({
+    name: wallet?.name || '',
+    icon: wallet?.icon || 'wallet-outline',
+    color: wallet?.color || '#808080',
+    balance: wallet?.balance || 0.0,
+    balance_currency: wallet?.balance_currency || '',
+    group: wallet?.group || null,
+  });
 
   const [showIconPicker, setShowIconPicker] = useState(false);
   const [showColorPicker, setShowColorPicker] = useState(false);
 
   const {data: groups} = useGetWalletGroupsQuery();
 
-  // const handleSelectGroup = (group) => {
-  //   setSelectedGroup(group);
-  //   setShowGroupPicker(false);
-  // };
+  const [createWallet] = useCreateWalletMutation();
+  const [updateWallet] = useUpdateWalletMutation();
+  const handleApplyPress = async () => {
+    try {
+      if (wallet) {
+        // Update wallet since wallet object exists
+        await updateWallet({...walletData, id: wallet.id});
+      } else {
+        // Create new wallet since wallet object doesn't exist
+        await createWallet(walletData);
+      }
+      navigation.goBack(); // Navigate back after the operation
+    } catch (error) {
+      console.error('Failed to save wallet:', error);
+      // Handle the error appropriately, e.g., show a message to the user
+    }
+  };
+  React.useEffect(() => {
+    navigation.setOptions({
+      headerRight: () => (
+        <TouchableOpacity onPress={handleApplyPress}>
+          <Text style={{marginRight: 15, fontSize: 16}}>Apply</Text>
+        </TouchableOpacity>
+      ),
+    });
+  }, [walletData]);
 
   // Your mutation functions for wallets
-  // const [createWallet] = useCreateWalletMutation();
-  // const [updateWallet] = useUpdateWalletMutation();
 
   // ... (similar event handlers, adjust for wallet)
 
@@ -50,10 +75,10 @@ const WalletModalScreen = ({route}: Props) => {
       <ScrollView contentContainerStyle={modalStyles.content}>
         {/* Name */}
         <TextInput
-          value={name}
+          value={walletData.name}
           placeholder="Wallet Name"
           placeholderTextColor="#aaa"
-          onChangeText={setName}
+          onChangeText={value => setWalletData({...walletData, name: value})}
           style={modalStyles.input}
         />
 
@@ -61,14 +86,19 @@ const WalletModalScreen = ({route}: Props) => {
           onClose={() => setShowColorPicker(false)}
           visible={showColorPicker}
           onColorSelected={value => {
-            setColor(value);
+            setWalletData({...walletData, color: value});
           }}
         />
         <TouchableOpacity
           onPress={() => setShowColorPicker(!showColorPicker)}
           style={modalStyles.row}>
           <Text style={modalStyles.label}>Color</Text>
-          <View style={[modalStyles.colorCircle, {backgroundColor: color}]} />
+          <View
+            style={[
+              modalStyles.colorCircle,
+              {backgroundColor: walletData.color},
+            ]}
+          />
         </TouchableOpacity>
 
         {/* Icon Picker */}
@@ -76,34 +106,38 @@ const WalletModalScreen = ({route}: Props) => {
           visible={showIconPicker}
           onClose={() => setShowIconPicker(false)}
           onSelectIcon={icon => {
-            setSelectedIcon(icon);
+            setWalletData({...walletData, icon});
             setShowIconPicker(false);
           }}
-          iconColor={color}
+          iconColor={walletData.color}
         />
         <TouchableOpacity
           onPress={() => setShowIconPicker(true)}
           style={modalStyles.row}>
           <Text style={modalStyles.label}>Icon</Text>
-          <Ionicons name={selectedIcon} size={24} color={color} />
+          <Ionicons name={walletData.icon} size={24} color={walletData.color} />
         </TouchableOpacity>
 
         {/* Initial Balance */}
         <TextInput
-          value={initialBalance.toString()}
+          value={walletData.balance.toString()}
           placeholder="Initial Balance"
           placeholderTextColor="#aaa"
-          onChangeText={value => setInitialBalance(parseFloat(value))}
+          onChangeText={value =>
+            setWalletData({...walletData, balance: parseFloat(value)})
+          }
           keyboardType="numeric"
           style={modalStyles.input}
         />
 
         {/* Currency */}
         <TextInput
-          value={currency}
+          value={walletData.balance_currency}
           placeholder="Currency (e.g., USD)"
           placeholderTextColor="#aaa"
-          onChangeText={setCurrency}
+          onChangeText={value =>
+            setWalletData({...walletData, balance_currency: value})
+          }
           style={modalStyles.input}
         />
 
@@ -111,10 +145,10 @@ const WalletModalScreen = ({route}: Props) => {
         <View>
           <Text style={modalStyles.label}>Group</Text>
           <Picker
-            selectedValue={selectedGroup || 'none'}
+            selectedValue={walletData.group || 'none'}
             // style={modalStyles.picker}
             onValueChange={itemValue => {
-              setSelectedGroup(itemValue);
+              setWalletData({...walletData, group: Number(itemValue)});
             }}>
             {/*<Picker.Item label="None" value="none" />*/}
             {/*<Picker.Item label="Group 1" value="group1" />*/}

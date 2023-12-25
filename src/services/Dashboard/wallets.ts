@@ -5,9 +5,9 @@ export type WalletGroup = {
   name: string;
 };
 
-type WalletBase = {
+export type WalletBase = {
   name: string;
-  group: number;
+  group: number | null;
   balance: number;
   color: string;
   icon: string;
@@ -16,7 +16,7 @@ type WalletBase = {
 
 export type Wallet = WalletBase & {
   id: number;
-  readonly currency_symbol: string;
+  readonly currency_symbol?: string;
 };
 
 const apiWithTag = api.enhanceEndpoints({
@@ -53,7 +53,31 @@ export const walletApi = apiWithTag.injectEndpoints({
             // query when `{ type: 'Posts', id: 'LIST' }` is invalidated
             [{type: 'WalletGroups', id: 'LIST'}],
     }),
+    createWallet: builder.mutation<Wallet, WalletBase>({
+      query: body => ({
+        url: '/v1/wallets/wallets/',
+        method: 'POST',
+        data: body,
+      }),
+      invalidatesTags: [{type: 'Wallets', id: 'LIST'}],
+    }),
+    updateWallet: builder.mutation<
+      Wallet,
+      Partial<Wallet> & Pick<Wallet, 'id'>
+    >({
+      query: ({id, ...body}) => ({
+        url: `/v1/wallets/wallets/${id}/`,
+        method: 'PATCH',
+        data: body,
+      }),
+      invalidatesTags: (result, error, {id}) => [{type: 'Wallets', id}],
+    }),
   }),
 });
 
-export const {useGetWalletsQuery, useGetWalletGroupsQuery} = walletApi;
+export const {
+  useGetWalletsQuery,
+  useGetWalletGroupsQuery,
+  useCreateWalletMutation,
+  useUpdateWalletMutation,
+} = walletApi;
